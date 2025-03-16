@@ -15,6 +15,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
     const [copiedBlocks, setCopiedBlocks] = useState<Record<string, boolean>>({});
     const [showThinking, setShowThinking] = useState(false);
     const messageRef = useRef<HTMLDivElement>(null);
+    const [attachedFiles, setAttachedFiles] = useState<string[]>([]);
+    const [cleanContent, setCleanContent] = useState<string>(message.content);
 
     const hasThinking =
         !isUser && !isSystem && message.content.includes('<think>') && message.content.includes('</think>');
@@ -37,20 +39,82 @@ export function ChatMessage({ message }: ChatMessageProps) {
         }
     }
 
-    const hasFileAttachment = isUser && mainContent.includes('[Attached ');
-    let messageText = mainContent;
+    const removeFileSections = (content: string): { cleanContent: string; extractedFiles: string[] } => {
+        let result = content;
+        const fileStartRegex = /<file name="[^"]*">/g;
+        let match;
+        const extractedFiles: string[] = [];
+
+        while ((match = fileStartRegex.exec(result)) !== null) {
+            const startIdx = match.index;
+            const startTag = match[0];
+            const fileName = startTag.match(/"([^"]*)"/)?.[1] || '';
+
+            if (fileName) {
+                extractedFiles.push(fileName);
+            }
+
+            const endTag = `</file name="${fileName}">`;
+            const endIdx = result.indexOf(endTag, startIdx + startTag.length);
+
+            if (endIdx !== -1) {
+                result = result.substring(0, startIdx) + result.substring(endIdx + endTag.length);
+
+                fileStartRegex.lastIndex = 0;
+            }
+        }
+
+        return { cleanContent: result.trim(), extractedFiles };
+    };
+
+    useEffect(() => {
+        const result = removeFileSections(mainContent);
+        setCleanContent(result.cleanContent);
+        if (result.extractedFiles.length > 0) {
+            setAttachedFiles(result.extractedFiles);
+        }
+    }, [mainContent]);
+
+    const hasFileAttachment = isUser && cleanContent.includes('[Attached ');
+    let messageText = cleanContent;
     let fileAttachmentText = '';
 
     if (hasFileAttachment) {
-        const attachmentStart = mainContent.indexOf('[Attached ');
+        const attachmentStart = cleanContent.indexOf('[Attached ');
         if (attachmentStart !== -1) {
-            const attachmentEnd = mainContent.indexOf(']', attachmentStart);
+            const attachmentEnd = cleanContent.indexOf(']', attachmentStart);
             if (attachmentEnd !== -1) {
-                fileAttachmentText = mainContent.substring(attachmentStart, attachmentEnd + 1).trim();
-                messageText = mainContent.substring(0, attachmentStart).trim();
+                fileAttachmentText = cleanContent.substring(attachmentStart, attachmentEnd + 1).trim();
+                messageText = cleanContent.substring(0, attachmentStart).trim();
             }
         }
     }
+
+    const FileAttachmentsIndicator = () => {
+        if (attachedFiles.length === 0) return null;
+
+        return (
+            <div className="mt-3 flex flex-col text-xs bg-secondary/30 rounded-md overflow-hidden border border-border/40">
+                <div className="flex items-center px-3 py-2 bg-secondary/50">
+                    <Paperclip className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                    <span className="text-muted-foreground font-medium">
+                        {attachedFiles.length} {attachedFiles.length === 1 ? 'file' : 'files'} attached
+                    </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 p-2 bg-background/20">
+                    {attachedFiles.map((fileName, index) => (
+                        <div
+                            key={index}
+                            className="flex items-center bg-secondary/40 px-2 py-1 rounded text-xs text-muted-foreground/90 border border-border/30"
+                        >
+                            <div className="w-2 h-2 rounded-full bg-muted-foreground/50 mr-1.5"></div>
+                            {fileName}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
 
     useEffect(() => {
         if (!messageRef.current) return;
@@ -254,12 +318,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
                             {messageText && <ReactMarkdown>{messageText}</ReactMarkdown>}
 
-                            {hasFileAttachment && (
-                                <div className="mt-2 flex items-center text-xs bg-primary/10 rounded-md px-3 py-2 border border-primary/20">
-                                    <Paperclip className="h-4 w-4 mr-2 text-primary/70" />
-                                    <span className="text-primary/90 font-medium">{fileAttachmentText}</span>
-                                </div>
-                            )}
+                            {/* Show file attachments indicator */}
+                            {attachedFiles.length > 0 && <FileAttachmentsIndicator />}
                         </>
                     ) : (
                         <>
@@ -283,12 +343,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
                             )}
                             <ReactMarkdown>{messageText}</ReactMarkdown>
 
-                            {hasFileAttachment && (
-                                <div className="mt-2 flex items-center text-xs bg-primary/10 rounded-md px-3 py-2 border border-primary/20">
-                                    <Paperclip className="h-4 w-4 mr-2 text-primary/70" />
-                                    <span className="text-primary/90 font-medium">{fileAttachmentText}</span>
-                                </div>
-                            )}
+                            {/* Show file attachments indicator */}
+                            {attachedFiles.length > 0 && <FileAttachmentsIndicator />}
 
                             {/* Token statistics - only show for assistant messages */}
                             {!isUser && !isSystem && message.tokenCount && (

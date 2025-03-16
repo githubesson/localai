@@ -236,26 +236,40 @@ export default function Chat() {
     const handleSendMessage = (content: string, attachedFiles?: File[]) => {
         setAutoScroll(true);
 
-        let messageContent = content;
-
-        if (attachedFiles && attachedFiles.length > 0) {
-            const fileInfos = attachedFiles.map(
-                (file) => `📎 ${file.name} (${(file.size / 1024).toFixed(2)} KB, type: ${file.type})`
-            );
-
-            if (messageContent) {
-                messageContent = `${messageContent}\n\n${fileInfos.join('\n')}`;
-            } else {
-                messageContent = fileInfos.join('\n');
-            }
-
-            toast({
-                title: `${attachedFiles.length > 1 ? 'Files' : 'File'} attached`,
-                description: `${attachedFiles.length} ${attachedFiles.length > 1 ? 'files have' : 'file has'} been attached to your message.`,
-            });
+        if (!attachedFiles || attachedFiles.length === 0) {
+            sendMessage(content);
+            return;
         }
 
-        sendMessage(messageContent);
+        const filePromises = attachedFiles.map((file) => {
+            return new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const fileContent = e.target?.result as string;
+                    const formattedFile = `<file name="${file.name}">
+${fileContent}
+</file name="${file.name}">`;
+                    resolve(formattedFile);
+                };
+                reader.readAsText(file);
+            });
+        });
+
+        Promise.all(filePromises)
+            .then((formattedFiles) => {
+                const fullMessage = [...formattedFiles, content].filter(Boolean).join('\n\n');
+
+                sendMessage(fullMessage);
+            })
+            .catch((error) => {
+                console.error('Error reading files:', error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Error reading files',
+                    description: 'Could not read one or more attached files.',
+                });
+                sendMessage(content);
+            });
     };
 
     const calculateTotalTokens = () => {
