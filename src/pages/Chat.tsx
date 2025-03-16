@@ -279,7 +279,7 @@ export default function Chat() {
 
                 if (file.type === 'application/pdf') {
                     fileContent = await extractText(file);
-                } else if (file.type.startsWith('text/')) {
+                } else {
                     fileContent = await readFileContent(file);
                 }
 
