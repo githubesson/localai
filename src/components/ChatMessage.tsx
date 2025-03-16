@@ -12,7 +12,6 @@ interface ChatMessageProps {
 export function ChatMessage({ message }: ChatMessageProps) {
     const isUser = message.role === 'user';
     const isSystem = message.role === 'system';
-    const [copiedBlocks, setCopiedBlocks] = useState<Record<string, boolean>>({});
     const [showThinking, setShowThinking] = useState(false);
     const messageRef = useRef<HTMLDivElement>(null);
     const [attachedFiles, setAttachedFiles] = useState<string[]>([]);
@@ -42,7 +41,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
     const removeFileSections = (content: string): { cleanContent: string; extractedFiles: string[] } => {
         let result = content;
         const fileStartRegex = /<file name="[^"]*">/g;
-        let match;
+        let match: RegExpExecArray | null;
         const extractedFiles: string[] = [];
 
         while ((match = fileStartRegex.exec(result)) !== null) {
@@ -220,8 +219,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
         const codeBlocks = messageRef.current.querySelectorAll('pre code');
 
-        codeBlocks.forEach((codeBlock, index) => {
-            const id = `code-${message.id}-${index}`;
+        codeBlocks.forEach((codeBlock) => {
             const pre = codeBlock.parentElement;
 
             if (!pre || pre.querySelector('.copy-button')) return;

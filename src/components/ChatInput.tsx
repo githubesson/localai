@@ -109,7 +109,7 @@ export function ChatInput({ onSendMessage, onStopGenerating, isGenerating, disab
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    disabled={disabled}
+                    disabled={disabled || isGenerating}
                     rows={1}
                 />
 
