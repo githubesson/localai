@@ -317,7 +317,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
                             {messageText && <ReactMarkdown>{messageText}</ReactMarkdown>}
 
                             {/* Show file attachments indicator */}
-                            {attachedFiles.length > 0 && <FileAttachmentsIndicator />}
+                            {isUser && attachedFiles.length > 0 && <FileAttachmentsIndicator />}
                         </>
                     ) : (
                         <>
@@ -342,7 +342,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
                             <ReactMarkdown>{messageText}</ReactMarkdown>
 
                             {/* Show file attachments indicator */}
-                            {attachedFiles.length > 0 && <FileAttachmentsIndicator />}
+                            {isUser && attachedFiles.length > 0 && <FileAttachmentsIndicator />}
 
                             {/* Token statistics - only show for assistant messages */}
                             {!isUser && !isSystem && message.tokenCount && (

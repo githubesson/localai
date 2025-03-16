@@ -3,14 +3,18 @@ import { useToast } from '@/hooks/use-toast';
 import { nanoid } from '@/lib/utils';
 
 const FILE_SYSTEM_PROMPT = `
-You can directly read PDF files, never claim to not be able to read them.
+You can directly read files, never claim to not be able to read them.
 You will directly read them by using the <file> tag.
 All the user provided file attachments are sent to the AI model through <file> tags.
 The file content is stored as a string in between the <file> and </file> tags.
 The AI model can access the file content and generate a response based on the file content.
 The AI model will also receive the associated file name as an attribute in the <file> tag.
 An example of a file tag is <file name="example.txt">This is the content of the file</file>.
-Never mention the <file> tag in your messages, as it is only used for file attachments.
+Never mention the <file> tag in your messages, as it is only used for marking file attachments.
+If the user provides a file, you should always read it and consider the content when generating a response.
+If the user does not provide a <file> tag, you should not make up a file content or make up a response based on a non-existent file.
+If the user asks for something that is not related to the file, you should not make up a file content or make up a response based on a non-existent file.
+If the user asks for something that is not mentioned in the file, but seems related to the query or the file, you can ask the user to provide more files, or to clarify their query.
 `;
 
 const PERSISTENT_SYSTEM_PROMPT = `${FILE_SYSTEM_PROMPT}`;
