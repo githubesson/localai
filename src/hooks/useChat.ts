@@ -2,6 +2,19 @@ import { useCallback, useReducer, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { nanoid } from '@/lib/utils';
 
+const FILE_SYSTEM_PROMPT = `
+You can directly read PDF files, never claim to not be able to read them.
+You will directly read them by using the <file> tag.
+All the user provided file attachments are sent to the AI model through <file> tags.
+The file content is stored as a string in between the <file> and </file> tags.
+The AI model can access the file content and generate a response based on the file content.
+The AI model will also receive the associated file name as an attribute in the <file> tag.
+An example of a file tag is <file name="example.txt">This is the content of the file</file>.
+Never mention the <file> tag in your messages, as it is only used for file attachments.
+`;
+
+const PERSISTENT_SYSTEM_PROMPT = `${FILE_SYSTEM_PROMPT}`;
+
 export interface ChatMessage {
     id: string;
     role: 'user' | 'assistant' | 'system';
@@ -326,7 +339,12 @@ export function useChat(baseUrl: string = 'http://localhost:8000') {
                     .map(({ role, content }) => ({ role, content }));
 
                 if (currentSession.systemPrompt) {
-                    messages.unshift({ role: 'system', content: currentSession.systemPrompt });
+                    messages.unshift({
+                        role: 'system',
+                        content: `${PERSISTENT_SYSTEM_PROMPT}\n${currentSession.systemPrompt}`,
+                    });
+                } else {
+                    messages.unshift({ role: 'system', content: PERSISTENT_SYSTEM_PROMPT });
                 }
 
                 messages.push({ role: 'user', content });
