@@ -4,6 +4,7 @@ import { Plus, Trash2, MessageSquare, Settings, ChevronLeft, ChevronRight } from
 import { ChatSession } from '../hooks/useChat';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ChatSidebarProps {
     sessions: ChatSession[];
@@ -65,14 +66,22 @@ export function ChatSidebar({
                     </Button>
                 )}
                 {collapsed && (
-                    <Button
-                        onClick={onCreateSession}
-                        size="icon"
-                        className="bg-grok-input hover:bg-grok-input/90 h-9 w-9"
-                    >
-                        <Plus className="h-4 w-4" />
-                        <span className="sr-only">New Chat</span>
-                    </Button>
+                    <TooltipProvider delayDuration={300}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    onClick={onCreateSession}
+                                    size="icon"
+                                    className="bg-grok-input hover:bg-grok-input/90 h-9 w-9"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right">
+                                <p className="text-xs">New Chat</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 )}
             </div>
 
@@ -86,19 +95,37 @@ export function ChatSidebar({
                             onMouseLeave={() => setHoveredSessionId(null)}
                         >
                             {collapsed ? (
-                                <Button
-                                    size="icon"
-                                    onClick={() => onSelectSession(session.id)}
-                                    className={cn(
-                                        'h-9 w-9 rounded-md flex items-center justify-center',
-                                        currentSessionId === session.id
-                                            ? 'bg-grok-input text-foreground'
-                                            : 'text-muted-foreground hover:bg-grok-input/60 hover:text-foreground'
+                                <div className="relative">
+                                    <TooltipProvider delayDuration={300}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    size="icon"
+                                                    onClick={() => onSelectSession(session.id)}
+                                                    className={cn(
+                                                        'h-9 w-9 rounded-md flex items-center justify-center relative',
+                                                        currentSessionId === session.id
+                                                            ? 'bg-grok-input text-foreground ring-2 ring-primary/20 shadow-sm shadow-primary/20'
+                                                            : 'bg-grok-dark text-muted-foreground hover:text-muted-foreground'
+                                                    )}
+                                                >
+                                                    <MessageSquare
+                                                        className={cn(
+                                                            'h-4 w-4',
+                                                            currentSessionId === session.id ? 'text-primary' : ''
+                                                        )}
+                                                    />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right" className="max-w-[200px]">
+                                                <p className="text-xs truncate">{session.title}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    {currentSessionId === session.id && (
+                                        <div className="absolute left-0 top-1.5 h-6 w-1 bg-primary rounded-r-md shadow-sm shadow-primary/40" />
                                     )}
-                                >
-                                    <MessageSquare className="h-4 w-4" />
-                                    <span className="sr-only">{session.title}</span>
-                                </Button>
+                                </div>
                             ) : (
                                 <button
                                     onClick={() => onSelectSession(session.id)}
@@ -160,16 +187,23 @@ export function ChatSidebar({
                         </Button>
                     </>
                 ) : (
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={toggleCollapse}
-                        className="h-9 w-9 bg-grok-input border-secondary/30 hover:bg-secondary/20"
-                        title="Expand sidebar"
-                    >
-                        <ChevronRight className="h-4 w-4" />
-                        <span className="sr-only">Expand sidebar</span>
-                    </Button>
+                    <TooltipProvider delayDuration={300}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={toggleCollapse}
+                                    className="h-9 w-9 bg-grok-input border-secondary/30 hover:bg-secondary/20"
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right">
+                                <p className="text-xs">Expand sidebar</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 )}
             </div>
         </div>
