@@ -17,13 +17,6 @@ export function ChatInput({ onSendMessage, onStopGenerating, isGenerating, disab
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
-        }
-    }, [input]);
-
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         if ((input.trim() || attachedFiles.length > 0) && !disabled) {
@@ -64,6 +57,19 @@ export function ChatInput({ onSendMessage, onStopGenerating, isGenerating, disab
     const removeAttachedFile = (index: number) => {
         setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
     };
+
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+        }
+    }, [input]);
+
+    useEffect(() => {
+        if (!isGenerating && textareaRef.current) {
+            textareaRef.current.focus();
+        }
+    }, [isGenerating]);
 
     return (
         <form onSubmit={handleSubmit} className="relative px-4 py-4 space-y-4 bg-transparent">
