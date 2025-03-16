@@ -9,6 +9,37 @@ import { SettingsDialog } from '@/components/SettingsDialog';
 import { useToast } from '@/hooks/use-toast';
 import { MessageSquare, BotMessageSquare, Sigma } from 'lucide-react';
 import { createLocalStorageListener } from '../lib/utils';
+import pdfToText from 'react-pdftotext';
+
+const extractText = async (file: File): Promise<string> => {
+    try {
+        return await pdfToText(file);
+    } catch (err) {
+        console.error('Error extracting text from PDF:', err);
+
+        throw new Error(`Could not extract text from ${file.name}`);
+    }
+};
+
+const readFileContent = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => {
+            resolve(reader.result as string);
+        };
+
+        reader.onerror = (error) => {
+            reject(new Error(`Failed to read file: ${error}`));
+        };
+
+        reader.readAsText(file);
+    });
+};
+
+const formatFileContent = (fileName: string, fileContent: string): string => {
+    return `<file name="${fileName}">\n${fileContent}\n</file name="${fileName}">`;
+};
 
 export default function Chat() {
     const [apiUrl, setApiUrl] = useState(localStorage.getItem('localai-api-url') || 'http://localhost:8000');
@@ -233,43 +264,43 @@ export default function Chat() {
         createNewSession(modelId);
     };
 
-    const handleSendMessage = (content: string, attachedFiles?: File[]) => {
+    const handleSendMessage = async (content: string, attachedFiles?: File[]): Promise<void> => {
         setAutoScroll(true);
 
         if (!attachedFiles || attachedFiles.length === 0) {
             sendMessage(content);
+
             return;
         }
 
-        const filePromises = attachedFiles.map((file) => {
-            return new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const fileContent = e.target?.result as string;
-                    const formattedFile = `<file name="${file.name}">
-${fileContent}
-</file name="${file.name}">`;
-                    resolve(formattedFile);
-                };
-                reader.readAsText(file);
-            });
-        });
+        try {
+            const filePromises = attachedFiles.map(async (file) => {
+                let fileContent: string;
 
-        Promise.all(filePromises)
-            .then((formattedFiles) => {
-                const fullMessage = [...formattedFiles, content].filter(Boolean).join('\n\n');
+                if (file.type === 'application/pdf') {
+                    fileContent = await extractText(file);
+                } else if (file.type.startsWith('text/')) {
+                    fileContent = await readFileContent(file);
+                }
 
-                sendMessage(fullMessage);
-            })
-            .catch((error) => {
-                console.error('Error reading files:', error);
-                toast({
-                    variant: 'destructive',
-                    title: 'Error reading files',
-                    description: 'Could not read one or more attached files.',
-                });
-                sendMessage(content);
+                return formatFileContent(file.name, fileContent);
             });
+
+            const formattedFiles = await Promise.all(filePromises);
+            const fullMessage = [...formattedFiles, content].filter(Boolean).join('\n');
+
+            sendMessage(fullMessage);
+        } catch (err) {
+            console.error(`Error processing files: ${err}`);
+
+            toast({
+                variant: 'destructive',
+                title: 'Error processing files',
+                description: `Could not process attached files: ${err}`,
+            });
+
+            sendMessage(content);
+        }
     };
 
     const calculateTotalTokens = () => {
