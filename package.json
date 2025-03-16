@@ -12,11 +12,11 @@
         "build:dev": "vite build --mode development",
         "lint": "eslint .",
         "preview": "vite preview",
-        "electron": "electron .",
-        "dist": "electron-builder -p never -mwl",
-        "dist:win": "electron-builder --win",
-        "dist:linux": "electron-builder --linux",
-        "dist:mac": "electron-builder --mac"
+        "electron": "tsc && vite build && electron .",
+        "dist": "tsc && vite build && electron-builder -p never -mwl",
+        "dist:win": "tsc && vite build && electron-builder --win",
+        "dist:linux": "tsc && vite build && electron-builder --linux",
+        "dist:mac": "tsc && vite build && electron-builder --mac"
     },
     "dependencies": {
         "@hookform/resolvers": "^3.9.0",
