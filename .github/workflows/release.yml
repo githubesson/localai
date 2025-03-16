@@ -1,53 +1,53 @@
 name: Release electron binaries
 
 on:
-  push:
-    tags:
-      - "v*"
+    push:
+        tags:
+            - 'v*'
 
 permissions:
-  contents: write
+    contents: write
 
 jobs:
-  build-and-release:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    build-and-release:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'npm'
 
-      - name: Set npm registry
-        run: npm config set registry https://registry.npmjs.org/
-    
-      - name: Install dependencies
-        run: npm install
-      
-      - name: Build React app
-        run: npm run build
-        env:
-          CI: false
+            - name: Set npm registry
+              run: npm config set registry https://registry.npmjs.org/
 
-      - name: Install Wine for Windows builds
-        run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          sudo apt-get install -y wine wine32 wine64
+            - name: Install dependencies
+              run: npm install
 
-      - name: Build binaries
-        run: |
-          npm run dist
+            - name: Build React app
+              run: npm run build
+              env:
+                  CI: false
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            release/*.zip
-            release/*.exe
-          draft: false
-          prerelease: false
-          generate_release_notes: true
+            - name: Install Wine for Windows builds
+              run: |
+                  sudo dpkg --add-architecture i386
+                  sudo apt-get update
+                  sudo apt-get install -y wine wine32 wine64
+
+            - name: Build binaries
+              run: |
+                  npm run dist
+
+            - name: Create Release
+              uses: softprops/action-gh-release@v1
+              with:
+                  files: |
+                      release/*.zip
+                      release/*.exe
+                  draft: false
+                  prerelease: false
+                  generate_release_notes: true
