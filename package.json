@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "electron": "electron .",
-    "dist": "electron-builder -mwl",
+    "dist": "electron-builder -p never -mwl",
     "dist:win": "electron-builder --win",
     "dist:linux": "electron-builder --linux",
     "dist:mac": "electron-builder --mac"
