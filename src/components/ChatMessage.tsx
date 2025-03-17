@@ -128,6 +128,19 @@ export function ChatMessage({ message }: ChatMessageProps) {
         margin: 1rem 0;
         overflow-x: auto;
       }
+      .prose pre::-webkit-scrollbar {
+        height: 8px;
+      }
+      .prose pre::-webkit-scrollbar-track {
+        background: #121212;
+      }
+      .prose pre::-webkit-scrollbar-thumb {
+        background: #262626;
+        border-radius: 4px;
+      }
+      .prose pre::-webkit-scrollbar-thumb:hover {
+        background: #333;
+      }
       .prose code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         font-size: 0.875rem;
@@ -194,6 +207,21 @@ export function ChatMessage({ message }: ChatMessageProps) {
         padding: 0.75rem;
         border-top: 1px solid rgba(63, 63, 70, 0.4);
         background-color: rgba(24, 24, 27, 0.4);
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      .thinking-content::-webkit-scrollbar {
+        width: 8px;
+      }
+      .thinking-content::-webkit-scrollbar-track {
+        background: #121212;
+      }
+      .thinking-content::-webkit-scrollbar-thumb {
+        background: #262626;
+        border-radius: 4px;
+      }
+      .thinking-content::-webkit-scrollbar-thumb:hover {
+        background: #333;
       }
       .thinking-icon {
         margin-right: 0.5rem;

@@ -359,7 +359,11 @@ export default function Chat() {
 
                 {currentSession ? (
                     <>
-                        <div className="flex-1 pt-4 overflow-y-auto" ref={scrollAreaRef} onScroll={handleScroll}>
+                        <div
+                            className="flex-1 pt-4 overflow-y-auto custom-scrollbar"
+                            ref={scrollAreaRef}
+                            onScroll={handleScroll}
+                        >
                             {currentSession.messages.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full pb-20">
                                     <div className="max-w-lg text-center space-y-4">

@@ -69,4 +69,27 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
+
+    /* Custom scrollbar styles */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #121212; /* Using the grok-darker color */
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #262626; /* Using the grok-input color */
+        border-radius: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #333; /* Slightly lighter on hover */
+    }
+
+    .custom-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: #262626 #121212; /* thumb color track color */
+    }
 }
