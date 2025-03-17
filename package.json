@@ -7,16 +7,17 @@
     "type": "module",
     "main": "main.js",
     "scripts": {
-        "dev": "vite",
-        "build": "tsc && vite build",
-        "build:dev": "vite build --mode development",
+        "dev": "node scripts/copy-pdf-worker.js && vite",
+        "build": "node scripts/copy-pdf-worker.js && tsc && vite build",
+        "build:dev": "node scripts/copy-pdf-worker.js && vite build --mode development",
         "lint": "eslint .",
         "preview": "vite preview",
-        "electron": "tsc && vite build && electron .",
-        "dist": "tsc && vite build && electron-builder -p never -mwl",
-        "dist:win": "tsc && vite build && electron-builder --win",
-        "dist:linux": "tsc && vite build && electron-builder --linux",
-        "dist:mac": "tsc && vite build && electron-builder --mac"
+        "electron": "NODE_ENV=development node scripts/copy-pdf-worker.js && tsc && vite build && electron .",
+        "dist": "node scripts/copy-pdf-worker.js && tsc && vite build && electron-builder -p never -mwl",
+        "dist:win": "node scripts/copy-pdf-worker.js && tsc && vite build && electron-builder --win",
+        "dist:linux": "node scripts/copy-pdf-worker.js && tsc && vite build && electron-builder --linux",
+        "dist:mac": "node scripts/copy-pdf-worker.js && tsc && vite build && electron-builder --mac",
+        "postinstall": "node scripts/copy-pdf-worker.js"
     },
     "dependencies": {
         "@hookform/resolvers": "^3.9.0",
@@ -37,6 +38,7 @@
         "electron-vite": "^3.0.0",
         "lucide-react": "^0.462.0",
         "next-themes": "^0.3.0",
+        "pdfjs-dist": "5.0.375",
         "prettier": "^3.5.3",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
@@ -78,7 +80,14 @@
         "files": [
             "dist",
             "main.js",
+            "preload.js",
             "package.json"
+        ],
+        "extraResources": [
+            {
+                "from": "public/pdf.worker.min.js",
+                "to": "pdf.worker.min.js"
+            }
         ],
         "productName": "Local AI Chat",
         "directories": {

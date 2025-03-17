@@ -9,14 +9,14 @@ import { SettingsDialog } from '@/components/SettingsDialog';
 import { useToast } from '@/hooks/use-toast';
 import { MessageSquare, BotMessageSquare, Sigma } from 'lucide-react';
 import { createLocalStorageListener } from '../lib/utils';
-import pdfToText from 'react-pdftotext';
+import '../lib/pdfjs-config';
+import { extractTextFromPDF } from '../lib/pdf-utils';
 
 const extractText = async (file: File): Promise<string> => {
     try {
-        return await pdfToText(file);
+        return await extractTextFromPDF(file);
     } catch (err) {
         console.error('Error extracting text from PDF:', err);
-
         throw new Error(`Could not extract text from ${file.name}`);
     }
 };
