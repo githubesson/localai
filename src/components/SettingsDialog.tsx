@@ -26,6 +26,7 @@ export function SettingsDialog({ apiUrl, onApiUrlChange }: SettingsDialogProps) 
     const [open, setOpen] = useState(false);
     const [localApiUrl, setLocalApiUrl] = useState(apiUrl);
     const [systemPrompt, setSystemPrompt] = useState('');
+    const [fileSystemPrompt, setFileSystemPrompt] = useState('');
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const {
@@ -35,18 +36,22 @@ export function SettingsDialog({ apiUrl, onApiUrlChange }: SettingsDialogProps) 
         saveDefaultSystemPrompt,
         updateSystemPrompt,
         currentSessionId,
+        getFileSystemPrompt,
+        saveFileSystemPrompt,
     } = useChat();
 
     useEffect(() => {
         if (open) {
             setSystemPrompt(getDefaultSystemPrompt());
+            setFileSystemPrompt(getFileSystemPrompt());
         }
-    }, [open, getDefaultSystemPrompt]);
+    }, [open, getDefaultSystemPrompt, getFileSystemPrompt]);
 
     const handleSave = () => {
         onApiUrlChange(localApiUrl);
 
         saveDefaultSystemPrompt(systemPrompt);
+        saveFileSystemPrompt(fileSystemPrompt);
 
         if (currentSessionId) {
             updateSystemPrompt(currentSessionId, systemPrompt);
@@ -171,6 +176,51 @@ export function SettingsDialog({ apiUrl, onApiUrlChange }: SettingsDialogProps) 
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setSystemPrompt('You are a helpful AI assistant.')}
+                                    className="ml-2 text-xs"
+                                >
+                                    Reset
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <Separator className="my-2" />
+
+                    <div className="grid grid-cols-4 items-start gap-4">
+                        <Label htmlFor="file-system-prompt" className="text-right pt-2">
+                            File System Prompt
+                        </Label>
+                        <div className="col-span-3 space-y-2">
+                            <Textarea
+                                id="file-system-prompt"
+                                value={fileSystemPrompt}
+                                onChange={(e) => setFileSystemPrompt(e.target.value)}
+                                className="min-h-[100px]"
+                            />
+                            <div className="flex justify-between items-center">
+                                <p className="text-xs text-muted-foreground">
+                                    This prompt is used when file attachments are uploaded to guide the AI in
+                                    interpreting and working with the files.
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        // Reset to the default FILE_SYSTEM_PROMPT
+                                        const defaultPrompt = `You can directly read files, never claim to not be able to read them.
+You will directly read them by using the <file> tag.
+All the user provided file attachments are sent to the AI model through <file> tags.
+The file content is stored as a string in between the <file> and </file> tags.
+The AI model can access the file content and generate a response based on the file content.
+The AI model will also receive the associated file name as an attribute in the <file> tag.
+An example of a file tag is <file name="example.txt">This is the content of the file</file>.
+Never mention the <file> tag in your messages, as it is only used for marking file attachments.
+If the user provides a file, you should always read it and consider the content when generating a response.
+If the user does not provide a <file> tag, you should not make up a file content or make up a response based on a non-existent file.
+If the user asks for something that is not related to the file, you should not make up a file content or make up a response based on a non-existent file.
+If the user asks for something that is not mentioned in the file, but seems related to the query or the file, you can ask the user to provide more files, or to clarify their query.`;
+                                        setFileSystemPrompt(defaultPrompt);
+                                    }}
                                     className="ml-2 text-xs"
                                 >
                                     Reset

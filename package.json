@@ -1,7 +1,7 @@
 {
     "name": "local-ai-chat",
     "private": true,
-    "version": "1.0.4",
+    "version": "1.0.5",
     "description": "An alternative ai chat interface for locally hosted models",
     "author": "esson",
     "type": "module",

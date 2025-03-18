@@ -2,8 +2,9 @@ import { useCallback, useReducer, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { nanoid } from '@/lib/utils';
 
-const FILE_SYSTEM_PROMPT = `
-You can directly read files, never claim to not be able to read them.
+export const FILE_SYSTEM_PROMPT =
+    localStorage.getItem('localai-file-system-prompt') ||
+    `You can directly read files, never claim to not be able to read them.
 You will directly read them by using the <file> tag.
 All the user provided file attachments are sent to the AI model through <file> tags.
 The file content is stored as a string in between the <file> and </file> tags.
@@ -14,10 +15,22 @@ Never mention the <file> tag in your messages, as it is only used for marking fi
 If the user provides a file, you should always read it and consider the content when generating a response.
 If the user does not provide a <file> tag, you should not make up a file content or make up a response based on a non-existent file.
 If the user asks for something that is not related to the file, you should not make up a file content or make up a response based on a non-existent file.
-If the user asks for something that is not mentioned in the file, but seems related to the query or the file, you can ask the user to provide more files, or to clarify their query.
-`;
+If the user asks for something that is not mentioned in the file, but seems related to the query or the file, you can ask the user to provide more files, or to clarify their query.`;
 
-const PERSISTENT_SYSTEM_PROMPT = `${FILE_SYSTEM_PROMPT}`;
+export const getFileSystemPrompt = () => {
+    return localStorage.getItem('localai-file-system-prompt') || FILE_SYSTEM_PROMPT;
+};
+
+export const saveFileSystemPrompt = (prompt: string) => {
+    localStorage.setItem('localai-file-system-prompt', prompt);
+
+    const event = new CustomEvent('file-system-prompt-change', {
+        detail: { fileSystemPrompt: prompt },
+    });
+    window.dispatchEvent(event);
+};
+
+const PERSISTENT_SYSTEM_PROMPT = `${getFileSystemPrompt()}`;
 
 export interface ChatMessage {
     id: string;
@@ -343,15 +356,17 @@ export function useChat(baseUrl: string = 'http://localhost:8000') {
                     .map(({ role, content }) => ({ role, content }));
 
                 const hasFileAttachments = content.includes('<file name="');
-                
+                let usingFileSystemPrompt = false;
+
                 if (hasFileAttachments) {
+                    usingFileSystemPrompt = true;
                     if (currentSession.systemPrompt) {
                         messages.unshift({
                             role: 'system',
-                            content: `${FILE_SYSTEM_PROMPT}\n${currentSession.systemPrompt}`,
+                            content: `${getFileSystemPrompt()}\n${currentSession.systemPrompt}`,
                         });
                     } else {
-                        messages.unshift({ role: 'system', content: FILE_SYSTEM_PROMPT });
+                        messages.unshift({ role: 'system', content: getFileSystemPrompt() });
                     }
                 } else if (currentSession.systemPrompt) {
                     messages.unshift({
@@ -361,6 +376,14 @@ export function useChat(baseUrl: string = 'http://localhost:8000') {
                 }
 
                 messages.push({ role: 'user', content });
+
+                if (usingFileSystemPrompt) {
+                    addMessage(state.currentSessionId, {
+                        id: nanoid(),
+                        role: 'system',
+                        content: '📎 File system prompt enabled',
+                    });
+                }
 
                 abortController = new AbortController();
                 const { signal } = abortController;
@@ -613,5 +636,7 @@ export function useChat(baseUrl: string = 'http://localhost:8000') {
         getDefaultSystemPrompt,
         saveDefaultSystemPrompt,
         updateSystemPrompt,
+        getFileSystemPrompt,
+        saveFileSystemPrompt,
     };
 }

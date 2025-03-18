@@ -1,8 +1,8 @@
-import { ChatMessage as ChatMessageType } from '../hooks/useChat';
+import { ChatMessage as ChatMessageType, FILE_SYSTEM_PROMPT } from '../hooks/useChat';
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
-import { CircleDashed, ChevronDown, BrainCog, User, Bot, MessageSquare, Paperclip } from 'lucide-react';
+import { CircleDashed, ChevronDown, BrainCog, User, Bot, MessageSquare, Paperclip, Copy, Check } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 interface ChatMessageProps {
@@ -282,15 +282,74 @@ export function ChatMessage({ message }: ChatMessageProps) {
     const showThinkingSection = !isUser && !isSystem && (hasThinking || message.content.includes('<think>'));
 
     if (isSystem) {
+        const isFileSystemPrompt = message.content === '📎 File system prompt enabled';
+        const [isCopied, setIsCopied] = useState(false);
+
+        const handleCopyPrompt = () => {
+            const promptText = FILE_SYSTEM_PROMPT;
+            navigator.clipboard.writeText(promptText);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        };
+
         return (
-            <div className="py-3 px-4 flex items-start gap-4 bg-primary/10 border-l-2 border-primary">
-                <Avatar className="h-8 w-8 rounded-md flex items-center justify-center bg-primary/20 ring-2 ring-primary/20">
-                    <MessageSquare className="h-4 w-4 text-primary" />
+            <div
+                className={cn(
+                    'py-3 px-4 flex items-start gap-4',
+                    isFileSystemPrompt
+                        ? 'bg-muted/30 border-l-2 border-muted-foreground/30'
+                        : 'bg-primary/10 border-l-2 border-primary'
+                )}
+            >
+                <Avatar
+                    className={cn(
+                        'h-8 w-8 rounded-md flex items-center justify-center',
+                        isFileSystemPrompt ? 'bg-muted/50 ring-2 ring-muted/20' : 'bg-primary/20 ring-2 ring-primary/20'
+                    )}
+                >
+                    {isFileSystemPrompt ? (
+                        <Paperclip className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                        <MessageSquare className="h-4 w-4 text-primary" />
+                    )}
                 </Avatar>
                 <div className="flex-1 space-y-1 overflow-hidden">
-                    <div className="text-sm font-medium text-primary">System</div>
+                    <div
+                        className={cn(
+                            'text-sm font-medium flex items-center justify-between',
+                            isFileSystemPrompt ? 'text-muted-foreground' : 'text-primary'
+                        )}
+                    >
+                        <span>{isFileSystemPrompt ? 'File System' : 'System'}</span>
+                        {isFileSystemPrompt && (
+                            <button
+                                onClick={handleCopyPrompt}
+                                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                title="Copy system prompt"
+                            >
+                                {isCopied ? (
+                                    <>
+                                        <Check className="h-3.5 w-3.5" />
+                                        <span>Copied!</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Copy className="h-3.5 w-3.5" />
+                                        <span>Copy prompt</span>
+                                    </>
+                                )}
+                            </button>
+                        )}
+                    </div>
                     <div className="prose prose-invert max-w-none text-sm">
-                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                        {isFileSystemPrompt ? (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <Paperclip className="h-3.5 w-3.5" />
+                                <span>File system prompt enabled</span>
+                            </div>
+                        ) : (
+                            <ReactMarkdown>{message.content}</ReactMarkdown>
+                        )}
                     </div>
                 </div>
             </div>
