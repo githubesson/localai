@@ -342,13 +342,22 @@ export function useChat(baseUrl: string = 'http://localhost:8000') {
                     .filter((m) => !m.isLoading)
                     .map(({ role, content }) => ({ role, content }));
 
-                if (currentSession.systemPrompt) {
+                const hasFileAttachments = content.includes('<file name="');
+                
+                if (hasFileAttachments) {
+                    if (currentSession.systemPrompt) {
+                        messages.unshift({
+                            role: 'system',
+                            content: `${FILE_SYSTEM_PROMPT}\n${currentSession.systemPrompt}`,
+                        });
+                    } else {
+                        messages.unshift({ role: 'system', content: FILE_SYSTEM_PROMPT });
+                    }
+                } else if (currentSession.systemPrompt) {
                     messages.unshift({
                         role: 'system',
-                        content: `${PERSISTENT_SYSTEM_PROMPT}\n${currentSession.systemPrompt}`,
+                        content: currentSession.systemPrompt,
                     });
-                } else {
-                    messages.unshift({ role: 'system', content: PERSISTENT_SYSTEM_PROMPT });
                 }
 
                 messages.push({ role: 'user', content });
