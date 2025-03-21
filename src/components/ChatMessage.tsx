@@ -2,20 +2,33 @@ import { ChatMessage as ChatMessageType, FILE_SYSTEM_PROMPT } from '../hooks/use
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
-import { CircleDashed, ChevronDown, BrainCog, User, Bot, MessageSquare, Paperclip, Copy, Check } from 'lucide-react';
+import {
+    CircleDashed,
+    ChevronDown,
+    BrainCog,
+    User,
+    Bot,
+    MessageSquare,
+    Paperclip,
+    Copy,
+    Check,
+    RefreshCw,
+} from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 interface ChatMessageProps {
     message: ChatMessageType;
+    onRetry?: (messageId: string) => void;
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, onRetry }: ChatMessageProps) {
     const isUser = message.role === 'user';
     const isSystem = message.role === 'system';
     const [showThinking, setShowThinking] = useState(false);
     const messageRef = useRef<HTMLDivElement>(null);
     const [attachedFiles, setAttachedFiles] = useState<string[]>([]);
     const [cleanContent, setCleanContent] = useState<string>(message.content);
+    const [isCopied, setIsCopied] = useState(false);
 
     const hasThinking =
         !isUser && !isSystem && message.content.includes('<think>') && message.content.includes('</think>');
@@ -281,16 +294,24 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
     const showThinkingSection = !isUser && !isSystem && (hasThinking || message.content.includes('<think>'));
 
+    const handleCopyMessage = () => {
+        if (isSystem && message.content === '📎 File system prompt enabled') {
+            navigator.clipboard.writeText(FILE_SYSTEM_PROMPT);
+        } else {
+            navigator.clipboard.writeText(messageText);
+        }
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    };
+
+    const handleRetry = () => {
+        if (onRetry) {
+            onRetry(message.id);
+        }
+    };
+
     if (isSystem) {
         const isFileSystemPrompt = message.content === '📎 File system prompt enabled';
-        const [isCopied, setIsCopied] = useState(false);
-
-        const handleCopyPrompt = () => {
-            const promptText = FILE_SYSTEM_PROMPT;
-            navigator.clipboard.writeText(promptText);
-            setIsCopied(true);
-            setTimeout(() => setIsCopied(false), 2000);
-        };
 
         return (
             <div
@@ -321,11 +342,11 @@ export function ChatMessage({ message }: ChatMessageProps) {
                         )}
                     >
                         <span>{isFileSystemPrompt ? 'File System' : 'System'}</span>
-                        {isFileSystemPrompt && (
+                        <div className="flex items-center gap-2">
                             <button
-                                onClick={handleCopyPrompt}
+                                onClick={handleCopyMessage}
                                 className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                                title="Copy system prompt"
+                                title={isFileSystemPrompt ? 'Copy system prompt' : 'Copy message'}
                             >
                                 {isCopied ? (
                                     <>
@@ -335,11 +356,11 @@ export function ChatMessage({ message }: ChatMessageProps) {
                                 ) : (
                                     <>
                                         <Copy className="h-3.5 w-3.5" />
-                                        <span>Copy prompt</span>
+                                        <span>{isFileSystemPrompt ? 'Copy prompt' : 'Copy'}</span>
                                     </>
                                 )}
                             </button>
-                        )}
+                        </div>
                     </div>
                     <div className="prose prose-invert max-w-none text-sm">
                         {isFileSystemPrompt ? (
@@ -372,7 +393,29 @@ export function ChatMessage({ message }: ChatMessageProps) {
             </Avatar>
 
             <div className="flex-1 space-y-2 overflow-hidden">
-                <div className="text-sm font-medium">{isUser ? 'You' : 'AI Assistant'}</div>
+                <div className="text-sm font-medium flex items-center justify-between">
+                    <span>{isUser ? 'You' : 'AI Assistant'}</span>
+                    {!message.isLoading && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleCopyMessage}
+                                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-secondary/50"
+                                title="Copy message"
+                            >
+                                {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                            </button>
+                            {!isUser && !isSystem && onRetry && (
+                                <button
+                                    onClick={handleRetry}
+                                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-secondary/50"
+                                    title="Retry"
+                                >
+                                    <RefreshCw className="h-3.5 w-3.5" />
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 <div className="prose prose-invert max-w-none" ref={messageRef}>
                     {message.isLoading ? (

@@ -42,7 +42,7 @@ const formatFileContent = (fileName: string, fileContent: string): string => {
 };
 
 export default function Chat() {
-    const [apiUrl, setApiUrl] = useState(localStorage.getItem('localai-api-url') || 'http://localhost:8000');
+    const [apiUrl, setApiUrl] = useState(localStorage.getItem('localai-api-url') || 'http://localhost:1234/v1');
     const { toast } = useToast();
     const [autoScroll, setAutoScroll] = useState(true);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -298,8 +298,20 @@ export default function Chat() {
                 title: 'Error processing files',
                 description: `Could not process attached files: ${err}`,
             });
+        }
+    };
 
-            sendMessage(content);
+    const handleRetry = (messageId: string) => {
+        if (!currentSession) return;
+
+        const messageIndex = currentSession.messages.findIndex((m) => m.id === messageId);
+        if (messageIndex === -1) return;
+
+        for (let i = messageIndex - 1; i >= 0; i--) {
+            if (currentSession.messages[i].role === 'user') {
+                handleSendMessage(currentSession.messages[i].content);
+                break;
+            }
         }
     };
 
@@ -388,7 +400,7 @@ export default function Chat() {
                                         />
                                     )}
                                     {currentSession.messages.map((message) => (
-                                        <ChatMessage key={message.id} message={message} />
+                                        <ChatMessage key={message.id} message={message} onRetry={handleRetry} />
                                     ))}
                                     <div ref={messagesEndRef} />
                                 </div>
